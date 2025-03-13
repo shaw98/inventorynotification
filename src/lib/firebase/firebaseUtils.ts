@@ -3,6 +3,9 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import {
   collection,
@@ -35,6 +38,50 @@ export const signInWithGoogle = async () => {
     return result.user;
   } catch (error) {
     console.error("Error signing in with Google", error);
+    throw error;
+  }
+};
+
+export const signInWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    console.error("Firebase auth is not initialized");
+    throw new Error("Firebase auth is not initialized");
+  }
+  
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing in with email and password", error);
+    throw error;
+  }
+};
+
+export const signUpWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    console.error("Firebase auth is not initialized");
+    throw new Error("Firebase auth is not initialized");
+  }
+  
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    return result.user;
+  } catch (error) {
+    console.error("Error signing up with email and password", error);
+    throw error;
+  }
+};
+
+export const resetPassword = async (email: string) => {
+  if (!auth) {
+    console.error("Firebase auth is not initialized");
+    throw new Error("Firebase auth is not initialized");
+  }
+  
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    console.error("Error sending password reset email", error);
     throw error;
   }
 };

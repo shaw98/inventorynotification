@@ -2,12 +2,17 @@
 
 A web application for tracking inventory transfers between locations and generating reports.
 
+## Version
+v1.1.0 - Updated on May 30, 2024
+
 ## Features
 
 - **Inventory Transfer Management**: Track movement of inventory between locations
 - **Admin Dashboard**: View statistics and reports on inventory transfers
 - **Export Functionality**: Export data as PDF or Excel/CSV files
 - **Admin User Management**: Control who has access to the admin dashboard
+- **Location Filtering**: Filter transfers by from/to locations
+- **Custom Driver Names**: Easily update the list of drivers in the system
 
 ## Setup
 

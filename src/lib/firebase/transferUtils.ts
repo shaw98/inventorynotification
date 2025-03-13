@@ -36,12 +36,10 @@ const TRANSFERS_COLLECTION = "transfers";
 
 // Predefined list of drivers
 export const DRIVERS = [
-  "David Johnson", 
-  "Emily Rodriguez", 
-  "Michael Chen", 
-  "Sarah Thompson",
-  "Robert Williams",
-  "Jessica Martinez"
+  "Bobby", 
+  "John", 
+  "Austin", 
+  "Robert"
 ];
 
 // Predefined list of locations
