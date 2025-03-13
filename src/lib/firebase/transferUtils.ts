@@ -36,10 +36,12 @@ const TRANSFERS_COLLECTION = "transfers";
 
 // Predefined list of drivers
 export const DRIVERS = [
-  "Bobby", 
-  "John", 
-  "Austin", 
-  "Robert"
+  "David Johnson", 
+  "Emily Rodriguez", 
+  "Michael Chen", 
+  "Sarah Thompson",
+  "Robert Williams",
+  "Jessica Martinez"
 ];
 
 // Predefined list of locations
@@ -269,96 +271,5 @@ export const getTransfersByLocation = async (location: string, isFromLocation: b
   } catch (error) {
     console.error(`Error getting transfers by ${isFromLocation ? "from" : "to"} location:`, error);
     return [];
-  }
-};
-
-// Debug function to create a test transfer
-export const createTestTransfer = async (userId: string) => {
-  try {
-    if (!isFirebaseInitialized()) {
-      console.log("Firebase not initialized");
-      return null;
-    }
-    
-    // Use a random driver from the predefined list
-    const randomDriverIndex = Math.floor(Math.random() * DRIVERS.length);
-    
-    const testTransfer = {
-      fromLocation: LOCATIONS[0],
-      toLocation: LOCATIONS[1],
-      stockNumber: "TEST-" + Math.floor(Math.random() * 10000),
-      brand: "Test Brand",
-      model: "Test Model",
-      driverName: DRIVERS[randomDriverIndex],
-      transferDate: new Date().toISOString().split('T')[0],
-      timestamp: Timestamp.now(),
-      userId: userId
-    };
-    
-    const docRef = await addDoc(collection(db as Firestore, TRANSFERS_COLLECTION), testTransfer);
-    console.log("Created test transfer with ID:", docRef.id);
-    
-    return { id: docRef.id, ...testTransfer };
-  } catch (error) {
-    console.error("Error creating test transfer:", error);
-    return null;
-  }
-};
-
-// Function to generate multiple test transfers
-export const generateTestTransfers = async (userId: string, count: number = 10): Promise<number> => {
-  try {
-    if (!isFirebaseInitialized()) {
-      console.log("Firebase not initialized");
-      return 0;
-    }
-    
-    console.log(`Generating ${count} test transfers...`);
-    
-    const brands = ["Airstream", "Winnebago", "Jayco", "Thor", "Forest River"];
-    const models = ["Classic", "Minnie", "Eagle", "Magnitude", "Sunseeker"];
-    
-    const batch = [];
-    
-    for (let i = 0; i < count; i++) {
-      // Generate random data
-      const fromIndex = Math.floor(Math.random() * LOCATIONS.length);
-      let toIndex = Math.floor(Math.random() * LOCATIONS.length);
-      
-      // Make sure from and to locations are different
-      while (toIndex === fromIndex) {
-        toIndex = Math.floor(Math.random() * LOCATIONS.length);
-      }
-      
-      const driverIndex = Math.floor(Math.random() * DRIVERS.length);
-      const brandIndex = Math.floor(Math.random() * brands.length);
-      const modelIndex = Math.floor(Math.random() * models.length);
-      
-      // Create random date within the last 30 days
-      const date = new Date();
-      date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-      
-      const testTransfer = {
-        fromLocation: LOCATIONS[fromIndex],
-        toLocation: LOCATIONS[toIndex],
-        stockNumber: "TEST-" + Math.floor(Math.random() * 10000),
-        brand: brands[brandIndex],
-        model: models[modelIndex],
-        driverName: DRIVERS[driverIndex],
-        transferDate: date.toISOString().split('T')[0],
-        timestamp: Timestamp.fromDate(date),
-        userId: userId
-      };
-      
-      batch.push(addDoc(collection(db as Firestore, TRANSFERS_COLLECTION), testTransfer));
-    }
-    
-    const results = await Promise.all(batch);
-    console.log(`Successfully created ${results.length} test transfers`);
-    
-    return results.length;
-  } catch (error) {
-    console.error("Error generating test transfers:", error);
-    return 0;
   }
 }; 

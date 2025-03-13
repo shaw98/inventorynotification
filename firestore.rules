@@ -2,35 +2,16 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Admin collection - only authenticated admins can read/write
+    // Admin collection - temporarily allow all authenticated users
     match /admins/{adminId} {
-      // Allow read if the user is authenticated and their email is in the admins collection
-      allow read: if request.auth != null && 
-                   exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
-      
-      // Only allow admins to create new admin entries
-      allow create: if request.auth != null && 
-                     exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
-      
-      // Only allow admins to update/delete, and prevent deletion of the initial admin
-      allow update, delete: if request.auth != null && 
-                             exists(/databases/$(database)/documents/admins/$(request.auth.token.email)) &&
-                             !(resource.data.isInitialAdmin == true && request.method == 'delete');
+      // Allow read/write for all authenticated users
+      allow read, write: if request.auth != null;
     }
     
-    // Transfers collection - authenticated users can create, admins can read all
+    // Transfers collection - authenticated users can create and read
     match /transfers/{transferId} {
-      // Anyone authenticated can create a transfer
-      allow create: if request.auth != null;
-      
-      // Only the user who created the transfer or an admin can read it
-      allow read: if request.auth != null && 
-                   (resource.data.userId == request.auth.uid || 
-                    exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
-      
-      // Only admins can update or delete transfers
-      allow update, delete: if request.auth != null && 
-                             exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+      // Anyone authenticated can create, read, update, delete
+      allow read, write: if request.auth != null;
     }
     
     // Default deny

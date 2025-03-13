@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { LOCATIONS, DRIVERS } from "@/lib/firebase/transferUtils";
+import { addTransfer, LOCATIONS, DRIVERS } from "@/lib/firebase/transferUtils";
 import FirebaseStatus from "@/components/FirebaseStatus";
 
 export default function InputPage() {
@@ -74,39 +74,27 @@ export default function InputPage() {
         userEmail: user?.email || "unknown",
       };
       
-      // Save transfer data to Firebase via API endpoint
+      // Save transfer data to Firebase
       if (user) {
         try {
-          const response = await fetch("/api/transfers", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fromLocation: formData.fromLocation,
-              toLocation: formData.toLocation,
-              stockNumber: formData.stockNumber,
-              brand: formData.brand,
-              model: formData.model,
-              driverName: useCustomName ? formData.customDriverName : formData.driverName,
-              transferDate: formData.transferDate,
-              userId: user.uid,
-            }),
+          await addTransfer({
+            fromLocation: formData.fromLocation,
+            toLocation: formData.toLocation,
+            stockNumber: formData.stockNumber,
+            brand: formData.brand,
+            model: formData.model,
+            driverName: useCustomName ? formData.customDriverName : formData.driverName,
+            transferDate: formData.transferDate,
+            userId: user.uid,
           });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to save transfer data");
-          }
-          
           console.log("Transfer data saved to Firebase successfully");
-        } catch (apiError) {
-          console.error("API error:", apiError);
+        } catch (firebaseError) {
+          console.error("Firebase error:", firebaseError);
           throw new Error("Failed to save transfer data to database");
         }
       }
       
-      // Send the data to our notification API endpoint
+      // Send the data to our API endpoint
       const response = await fetch("/api/send-notification", {
         method: "POST",
         headers: {
@@ -116,15 +104,16 @@ export default function InputPage() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send notification");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API error response:", errorData);
+        throw new Error(errorData.message || "Failed to send notification");
       }
       
       // Redirect to confirmation page
-      router.push(`/confirmation?stockNumber=${formData.stockNumber}&from=${formData.fromLocation}&to=${formData.toLocation}`);
+      router.push("/confirmation");
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(error instanceof Error ? error.message : "An unknown error occurred");
+      alert(error instanceof Error ? error.message : "There was an error submitting the form. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
