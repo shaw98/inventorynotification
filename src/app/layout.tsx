@@ -1,4 +1,10 @@
 import "./globals.css";
+import { AuthProvider } from "../lib/contexts/AuthContext";
+
+export const metadata = {
+  title: "Inventory Notification App",
+  description: "Track inventory movement between locations",
+};
 
 export default function RootLayout({
   children,
@@ -7,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-gray-50">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
