@@ -24,28 +24,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    if (auth) {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        setUser(user);
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
+    if (!auth) {
+      console.error("Firebase auth is not initialized");
+      return;
+    }
+    
     try {
+      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (error) {
-      console.error("Error signing in with Google", error);
+      console.error("Error signing in with Google:", error);
     }
   };
 
   const signOutUser = async () => {
+    if (!auth) {
+      console.error("Firebase auth is not initialized");
+      return;
+    }
+    
     try {
       await firebaseSignOut(auth);
+      setUser(null);
     } catch (error) {
-      console.error("Error signing out", error);
+      console.error("Error signing out:", error);
     }
   };
 

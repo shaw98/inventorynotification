@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
-
-// Location options for dropdowns
-const LOCATIONS = ["Lakewood", "Longmont", "Fountain", "Airstream", "Storage"];
+import { LOCATIONS, DRIVERS } from "@/lib/firebase/transferUtils";
+import FirebaseStatus from "@/components/FirebaseStatus";
 
 export default function InputPage() {
   const { user, loading } = useAuth();
@@ -26,9 +25,7 @@ export default function InputPage() {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [useCustomName, setUseCustomName] = useState(false);
-  const [driverList, setDriverList] = useState<string[]>([
-    "John Doe", "Jane Smith", "Mike Johnson", "Sarah Williams"
-  ]);
+  const [driverList, setDriverList] = useState<string[]>(DRIVERS);
   
   // Redirect if not authenticated
   useEffect(() => {
@@ -61,6 +58,14 @@ export default function InputPage() {
     setIsSubmitting(true);
     
     try {
+      // Validate form data
+      if (!formData.fromLocation || !formData.toLocation || !formData.stockNumber || 
+          !formData.brand || !formData.model || 
+          (!formData.driverName && !useCustomName) || 
+          (useCustomName && !formData.customDriverName)) {
+        throw new Error("Please fill in all required fields");
+      }
+      
       // Prepare the data to send
       const dataToSend = {
         ...formData,
@@ -69,7 +74,39 @@ export default function InputPage() {
         userEmail: user?.email || "unknown",
       };
       
-      // Send the data to our API endpoint
+      // Save transfer data to Firebase via API endpoint
+      if (user) {
+        try {
+          const response = await fetch("/api/transfers", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fromLocation: formData.fromLocation,
+              toLocation: formData.toLocation,
+              stockNumber: formData.stockNumber,
+              brand: formData.brand,
+              model: formData.model,
+              driverName: useCustomName ? formData.customDriverName : formData.driverName,
+              transferDate: formData.transferDate,
+              userId: user.uid,
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to save transfer data");
+          }
+          
+          console.log("Transfer data saved to Firebase successfully");
+        } catch (apiError) {
+          console.error("API error:", apiError);
+          throw new Error("Failed to save transfer data to database");
+        }
+      }
+      
+      // Send the data to our notification API endpoint
       const response = await fetch("/api/send-notification", {
         method: "POST",
         headers: {
@@ -79,14 +116,15 @@ export default function InputPage() {
       });
       
       if (!response.ok) {
-        throw new Error("Failed to send notification");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send notification");
       }
       
       // Redirect to confirmation page
-      router.push("/confirmation");
+      router.push(`/confirmation?stockNumber=${formData.stockNumber}&from=${formData.fromLocation}&to=${formData.toLocation}`);
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("There was an error submitting the form. Please try again.");
+      alert(error instanceof Error ? error.message : "An unknown error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -137,6 +175,8 @@ export default function InputPage() {
       <div className="w-full max-w-lg mx-auto bg-white rounded-xl shadow-md overflow-hidden">
         <div className="p-6 md:p-8">
           <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">Where to today?</h1>
+          
+          <FirebaseStatus />
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* From Location */}
