@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { checkFirebaseConfig, isFirebaseConfigValid } from "./firebaseConfig";
 
 // Check if Firebase environment variables are set
@@ -29,6 +30,22 @@ let storage: FirebaseStorage | null = null;
 
 try {
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  
+  // Initialize App Check in production
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+    // Replace this with your reCAPTCHA v3 site key
+    const appCheckSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    
+    if (appCheckSiteKey) {
+      // Pass your reCAPTCHA v3 site key (public key) to activate
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(appCheckSiteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+      console.log('Firebase App Check initialized');
+    }
+  }
+  
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
